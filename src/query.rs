@@ -115,7 +115,11 @@ pub fn parse_assignments(args: &[String], meta: &Meta, entity: &str) -> Result<M
             }
             (_, Some(j)) => {
                 let field = field_name(&arg[..j], arg)?;
-                let value = coerce(meta, entity, &field, &arg[j + 1..]);
+                // `field=null` clears the field, as in filters; `field:="null"` keeps the string.
+                let value = match &arg[j + 1..] {
+                    "null" => Value::Null,
+                    raw => coerce(meta, entity, &field, raw),
+                };
                 out.insert(field, value);
             }
             _ => return Err(usage(format!("expected field=value or field:=<json>, got {arg:?}"))),
@@ -192,6 +196,14 @@ mod tests {
         assert_eq!(coerce(&m, "Lead", "phoneNumber", "0034931234567"), json!("0034931234567"));
         assert_eq!(coerce(&m, "Lead", "whatever", "12"), json!("12"));
         assert_eq!(coerce(&m, "Lead", "amount", "not-a-number"), json!("not-a-number"));
+    }
+
+    #[test]
+    fn assignments_send_null_for_null_word() {
+        let m = meta();
+        let body = parse_assignments(&["deadline=null".to_string(), "note:=\"null\"".to_string()], &m, "Lead").unwrap();
+        assert_eq!(body["deadline"], Value::Null);
+        assert_eq!(body["note"], json!("null"));
     }
 
     #[test]

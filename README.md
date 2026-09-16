@@ -180,10 +180,11 @@ espo unlink Lead 00000000000000001 teams TEAM_ID
 Values are converted to the field's declared type, read from the metadata cache: a `bool`
 field gets a real boolean, an `int` gets a number, a `multiEnum` gets a list split on
 commas. A phone number keeps its leading zeros because `phone` is a string field. Force a
-raw value with `:=`:
+raw value with `:=`. `field=null` clears a field:
 
 ```sh
 espo create Lead lastName=Garcia 'teamsIds:=["t1","t2"]'
+espo update Course abc123 deadline=null
 ```
 
 Longer bodies come from a file or a pipe, and inline pairs override them:
